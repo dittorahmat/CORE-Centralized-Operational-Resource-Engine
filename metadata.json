@@ -1,0 +1,6 @@
+{
+  "name": "CORE - Enterprise Intelligence System",
+  "description": "Centralized Operational Resource Engine - AI-powered platform turning documents, systems, and company data into instant answers and insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
