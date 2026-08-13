@@ -55,6 +55,18 @@ export default function App() {
   const [activeCitationModal, setActiveCitationModal] = useState<SourceCitation | DocumentItem | null>(null);
   const [isAcronymModalOpen, setIsAcronymModalOpen] = useState(false);
 
+  // Global Ctrl+K / Cmd+K hotkey to trigger search / Ask CORE chat
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCurrentView('chat');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handle sending message to backend Express / Gemini
   const handleSendMessage = async (query: string) => {
     const userMsg: ChatMessage = {

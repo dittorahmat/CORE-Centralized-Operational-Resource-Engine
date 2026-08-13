@@ -79,6 +79,11 @@ export const AskNexusView: React.FC<AskNexusViewProps> = ({
     ];
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -924,6 +929,7 @@ export const AskNexusView: React.FC<AskNexusViewProps> = ({
 
           <form onSubmit={handleSubmit} className="flex gap-2 relative">
             <input
+              ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
