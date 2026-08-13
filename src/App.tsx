@@ -81,8 +81,8 @@ export default function App() {
       const data = await res.json();
 
       const botMsg: ChatMessage = {
-        id: `nex-${Date.now()}`,
-        sender: 'nexus',
+        id: `core-${Date.now()}`,
+        sender: 'core',
         text: data.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         citations: data.citations,
@@ -96,8 +96,8 @@ export default function App() {
       // Fallback message if network is down
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
-        sender: 'nexus',
-        text: `### NEXUS Enterprise Intelligence (Local Fallback)\n\nI have queried connected systems for **"${query}"**.\n\nKey Insights:\n- **Top Margin Generator**: NEXUS Cloud Enterprise Pro (68.4% gross margin).\n- **Highest Volume Customer**: Apex Global Corp ($14.8M gross revenue, $6.10M net profit).\n- **Immediate Priority**: Branch #04 equipment downtime requiring $45k/day overtime mitigation.`,
+        sender: 'core',
+        text: `### CORE Enterprise Intelligence (Local Fallback)\n\nI have queried connected systems for **"${query}"**.\n\nKey Insights:\n- **Top Margin Generator**: CORE Cloud Enterprise Pro (68.4% gross margin).\n- **Highest Volume Customer**: Apex Global Corp ($14.8M gross revenue, $6.10M net profit).\n- **Immediate Priority**: Branch #04 equipment downtime requiring $45k/day overtime mitigation.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         citations: [
           {
@@ -271,7 +271,7 @@ export default function App() {
             </div>
           )}
 
-          {/* View 2: Ask NEXUS AI Chat */}
+          {/* View 2: Ask CORE AI Chat */}
           {currentView === 'chat' && (
             <AskNexusView
               currentRole={currentRole}

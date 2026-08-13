@@ -27,7 +27,7 @@ export interface MetricVisual {
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'nexus';
+  sender: 'user' | 'core';
   text: string;
   timestamp: string;
   citations?: SourceCitation[];

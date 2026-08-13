@@ -3,8 +3,16 @@ import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
+import multer from "multer";
+import { getStorageProvider } from "./server/storage";
+import { parseDocumentContent, chunkText } from "./server/utils/documentParser";
+import { db } from "./server/db";
+import { documents, documentEmbeddings } from "./server/db/schema";
 
 dotenv.config();
+
+const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } }); // 25MB limit
+const storageProvider = getStorageProvider();
 
 const app = express();
 const PORT = 3000;
@@ -39,7 +47,7 @@ const ENTERPRISE_MOCK_KNOWLEDGE = {
     { customer: "Nexus Financial Holdings", revenue: "$6.8M", netProfit: "$3.26M", margin: "48.0%", growth: "+29%" }
   ],
   highMarginProducts: [
-    { product: "NEXUS Cloud Enterprise Pro", margin: "68.4%", revShare: "34%", ARPU: "$12,400" },
+    { product: "CORE Cloud Enterprise Pro", margin: "68.4%", revShare: "34%", ARPU: "$12,400" },
     { product: "Automated Compliance & Security Suite", margin: "64.1%", revShare: "22%", ARPU: "$8,200" },
     { product: "Predictive ERP Insights Add-On", margin: "59.8%", revShare: "18%", ARPU: "$5,100" },
     { product: "Legacy Hardware Support", margin: "18.1%", revShare: "14%", ARPU: "$2,800" }
@@ -59,19 +67,14 @@ const ENTERPRISE_MOCK_KNOWLEDGE = {
   ]
 };
 
-// API Endpoint for NEXUS AI Chat & Question Answering
-app.post("/api/chat", async (req, res) => {
-  const { message, role = "Operations & Finance", history = [] } = req.body;
+// API Endpoint for CORE AI Chat & Question Answering
+app.post("/api/chat", async (req: Request, res: Response) => {
+  try {
+    const { message, role, history = [] } = req.body;
 
-  if (!message) {
-    return res.status(400).json({ error: "Message is required" });
-  }
-
-  // Attempt real Gemini API call first if key is configured
-  if (ai) {
-    try {
-      const systemInstruction = `
-You are NEXUS™ (Networked Enterprise Knowledge & Unified System), an enterprise-grade AI intelligence platform.
+    // System prompt instructing Gemini to act as CORE AI Engine
+    const systemInstruction = `
+You are CORE™ (Centralized Operational Resource Engine), an enterprise-grade AI intelligence platform.
 Your job is to provide instant, precise, executive-level answers, actionable recommendations, and data insights based on company SOPs, financial reports, ERP/CRM records, and contracts.
 
 User Role: ${role}
@@ -86,39 +89,49 @@ Guidelines:
 3. Be professional, confident, clear, and direct.
       `;
 
-      const contents = history.map((h: any) => `${h.sender === "user" ? "User" : "NEXUS"}: ${h.text}`).join("\n");
-      const fullPrompt = `${contents}\nUser: ${message}`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: fullPrompt,
-        config: {
-          systemInstruction,
-          temperature: 0.3,
-        },
-      });
-
-      const replyText = response.text || "NEXUS generated an answer based on enterprise data.";
-
-      // Infer citations and chart visuals based on question context
-      const inferredCitations = generateCitationsForQuery(message);
-      const inferredMetric = generateMetricVisualForQuery(message);
-      const inferredRecommendations = generateRecommendationsForQuery(message);
-
-      return res.json({
-        reply: replyText,
-        citations: inferredCitations,
-        metricVisual: inferredMetric,
-        recommendations: inferredRecommendations,
-      });
-    } catch (err) {
-      console.error("Gemini API call failed, using high-fidelity contextual knowledge engine:", err);
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
     }
-  }
 
-  // High-fidelity fallback response engine matching poster requirements
-  const fallback = generateSmartFallbackResponse(message, role);
-  return res.json(fallback);
+    // Attempt real Gemini API call first if key is configured
+    if (ai) {
+      try {
+        const contents = history.map((h: any) => `${h.sender === "user" ? "User" : "CORE"}: ${h.text}`).join("\n");
+        const fullPrompt = `${contents}\nUser: ${message}`;
+
+        const response = await ai.models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: fullPrompt,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+          },
+        });
+
+        const replyText = response.text || "CORE generated an answer based on enterprise data.";
+
+        // Infer citations and chart visuals based on question context
+        const inferredCitations = generateCitationsForQuery(message);
+        const inferredMetric = generateMetricVisualForQuery(message);
+        const inferredRecommendations = generateRecommendationsForQuery(message);
+
+        return res.json({
+          reply: replyText,
+          citations: inferredCitations,
+          metricVisual: inferredMetric,
+          recommendations: inferredRecommendations,
+        });
+      } catch (err) {
+        console.error("Gemini API call failed, using high-fidelity contextual knowledge engine:", err);
+      }
+    }
+
+    // High-fidelity fallback response engine matching poster requirements
+    const fallback = generateSmartFallbackResponse(message, role);
+    return res.json(fallback);
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Helper functions for rich contextual responses
@@ -203,7 +216,7 @@ function generateMetricVisualForQuery(q: string) {
       title: "Product Line Gross Margin % Comparison",
       type: "bar" as const,
       data: [
-        { label: "NEXUS Cloud Pro", value: 68.4 },
+        { label: "CORE Cloud Pro", value: 68.4 },
         { label: "Compliance Suite", value: 64.1 },
         { label: "Predictive ERP", value: 59.8 },
         { label: "Legacy Hardware", value: 18.1 },
@@ -246,7 +259,7 @@ function generateRecommendationsForQuery(q: string): string[] {
     ];
   }
   return [
-    "Verify source document cross-references in NEXUS Documents Vault.",
+    "Verify source document cross-references in CORE Documents Vault.",
     "Schedule automated weekly executive summary alert to email.",
     "Share insight report with Operations & Finance leadership committee."
   ];
@@ -272,13 +285,12 @@ Based on cross-referenced data from **SAP S/4HANA ERP** and **Salesforce Enterpr
 4. **Starlight Logistics**:
    - **Gross Revenue**: $7.2M | **Net Profit**: $2.52M | **Margin**: 35.0%
 
-*Key Insight*: Accounts utilizing **NEXUS Cloud Enterprise Pro** deliver **6.8% higher net profitability** than standard legacy accounts.`;
+*Key Insight*: Accounts utilizing **CORE Cloud Enterprise Pro** deliver **6.8% higher net profitability** than standard legacy accounts.`;
   } else if (lower.includes("margin") || lower.includes("product")) {
-    text = `### Executive Summary: Product Margin Analysis
+    text = `### Product Margin Analysis
 
-Analysis of **Q3 Enterprise Financial Performance & Margin Analysis** indicates a significant margin spread across product lines:
-
-- **NEXUS Cloud Enterprise Pro**: **68.4% Gross Margin** (Highest margin generator, contributing 34% total revenue).
+Based on real-time ERP product line telemetry:
+- **CORE Cloud Enterprise Pro**: **68.4% Gross Margin** (Highest margin generator, contributing 34% total revenue).
 - **Automated Compliance & Security Suite**: **64.1% Gross Margin** (Fastest growing line at +28% YoY).
 - **Predictive ERP Insights Add-On**: **59.8% Gross Margin**.
 - **Legacy Hardware Support**: **18.1% Gross Margin** (*Margin Drag* — down 6.2% due to global component cost inflation).
@@ -327,9 +339,9 @@ Here are the top operational items requiring immediate attention this week:
 3. **[MEDIUM] SOP Risk Dual-Approval Audits**:
    - 3 enterprise accounts over $250k are awaiting final CFO sign-off in the compliance portal.`;
   } else {
-    text = `### NEXUS Enterprise Intelligence Response
+    text = `### CORE Enterprise Intelligence Response
 
-Thank you for asking! **NEXUS™** has queried connected systems (**SAP ERP, Salesforce CRM, Workday HR, Data Warehouse, and Document Vault**) to answer your question regarding **"${q}"**.
+Thank you for asking! **CORE™** has queried connected systems (**SAP ERP, Salesforce CRM, Workday HR, Data Warehouse, and Document Vault**) to answer your question regarding **"${q}"**.
 
 **Key Intelligence Highlights**:
 - **System Synchronization**: All 6 enterprise data sources are active and SOC2 encrypted.
@@ -347,31 +359,106 @@ Feel free to ask a follow-up or click any of the source document citations below
   };
 }
 
-// API Endpoint to analyze custom user-uploaded documents
-app.post("/api/analyze-document", (req, res) => {
-  const { title, content, category = "SOPs" } = req.body;
+// API Endpoint to upload & analyze custom binary/text documents with Vector RAG
+app.post("/api/analyze-document", upload.single("file"), async (req: express.Request, res: express.Response) => {
+  try {
+    let title = req.body.title;
+    let content = req.body.content || "";
+    let category = req.body.category || "SOPs";
+    let fileUrl = "";
+    let fileKey = "";
 
-  if (!title || !content) {
-    return res.status(400).json({ error: "Title and content are required" });
+    // Process file upload via Storage Provider
+    if (req.file) {
+      title = title || req.file.originalname;
+      const uploadedResult = await storageProvider.uploadFile(
+        req.file.originalname,
+        req.file.buffer,
+        req.file.mimetype
+      );
+      fileUrl = uploadedResult.fileUrl;
+      fileKey = uploadedResult.fileKey;
+
+      // Extract raw text content using multi-format parser (.pdf, .docx, .xlsx, .txt)
+      content = await parseDocumentContent(req.file.buffer, req.file.originalname, req.file.mimetype);
+    }
+
+    if (!title || !content) {
+      return res.status(400).json({ error: "Title and file or content are required" });
+    }
+
+    const wordCount = content.split(/\s+/).length;
+    const docId = `doc-${Date.now().toString().slice(-6)}`;
+    const generatedSummary = `AI Indexed Document: "${title}" (${wordCount} words). Multi-format parsed & indexed into CORE Knowledge Vault with vector embeddings.`;
+
+    const newDoc = {
+      id: docId,
+      title: title || 'Uploaded Document',
+      category: category,
+      fileType: title.endsWith('.pdf') ? 'pdf' : title.endsWith('.xlsx') ? 'xlsx' : title.endsWith('.docx') ? 'docx' : 'text',
+      fileSize: `${(content.length / 1024).toFixed(1)} KB`,
+      fileUrl: fileUrl || undefined,
+      author: 'Current User',
+      department: 'Operations',
+      status: 'Indexed',
+      summary: generatedSummary,
+      tags: ["Custom Upload", category, "CORE Indexed", "pgvector Ready"],
+      contentExcerpt: content.slice(0, 300) + "..."
+    };
+
+    // Store in Drizzle ORM if DB connected
+    if (db) {
+      try {
+        await db.insert(documents).values({
+          id: docId,
+          title: newDoc.title,
+          category: newDoc.category,
+          fileType: newDoc.fileType,
+          fileSize: newDoc.fileSize,
+          fileUrl: fileUrl || null,
+          author: newDoc.author,
+          department: newDoc.department,
+          status: newDoc.status,
+          summary: newDoc.summary,
+          tags: newDoc.tags,
+          contentExcerpt: newDoc.contentExcerpt,
+        });
+
+        // Perform text chunking & vector embedding generation
+        const textChunks = chunkText(content);
+        for (let i = 0; i < textChunks.length; i++) {
+          let embeddingVector: number[] | null = null;
+          if (ai) {
+            try {
+              const embRes = await ai.models.embedContent({
+                model: "text-embedding-004",
+                contents: textChunks[i]
+              });
+              embeddingVector = embRes.embedding?.values || null;
+            } catch (embErr) {
+              console.warn(`Embedding generation failed for chunk ${i}:`, embErr);
+            }
+          }
+
+          await db.insert(documentEmbeddings).values({
+            id: `emb-${docId}-${i}`,
+            documentId: docId,
+            chunkIndex: i,
+            chunkContent: textChunks[i],
+            embedding: embeddingVector,
+            metadata: { title, category, fileUrl }
+          });
+        }
+      } catch (dbErr) {
+        console.error("Drizzle DB insert failed:", dbErr);
+      }
+    }
+
+    return res.json(newDoc);
+  } catch (err) {
+    console.error("Document upload analysis failed:", err);
+    res.status(500).json({ error: "Failed to process document upload" });
   }
-
-  const wordCount = content.split(/\s+/).length;
-  const generatedSummary = `AI Indexed Document: "${title}" (${wordCount} words). Processed and structured into NEXUS Enterprise Knowledge Vault with SOC2 encryption.`;
-
-  return res.json({
-    id: `doc-${Date.now().toString().slice(-4)}`,
-    title,
-    category,
-    fileType: title.endsWith(".pdf") ? "pdf" : title.endsWith(".xlsx") ? "xlsx" : "docx",
-    size: `${(content.length / 1024).toFixed(1)} KB`,
-    lastUpdated: new Date().toISOString().split("T")[0],
-    author: "User Uploaded",
-    department: "Enterprise Strategy",
-    status: "Indexed",
-    summary: generatedSummary,
-    tags: ["Custom Upload", category, "NEXUS Indexed"],
-    contentExcerpt: content.slice(0, 300) + "..."
-  });
 });
 
 // Vite & Static file serving
@@ -391,7 +478,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`NEXUS Server running on http://0.0.0.0:${PORT}`);
+    console.log(`CORE Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

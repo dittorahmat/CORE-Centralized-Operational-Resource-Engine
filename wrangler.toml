@@ -1,0 +1,12 @@
+name = "core-centralized-operational-resource-engine"
+main = "server.ts"
+compatibility_date = "2026-08-01"
+
+[vars]
+DEPLOYMENT_MODE = "cloudflare"
+
+# Bind Cloudflare R2 Bucket ke objek env.MY_R2_BUCKET di worker
+[[r2_buckets]]
+binding = "MY_R2_BUCKET"
+bucket_name = "core-documents"
+preview_bucket_name = "core-documents"

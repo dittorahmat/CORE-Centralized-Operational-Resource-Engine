@@ -714,7 +714,7 @@ export const AskNexusView: React.FC<AskNexusViewProps> = ({
             } animate-in fade-in duration-200`}
           >
             {/* Bot Avatar */}
-            {msg.sender === 'nexus' && (
+            {msg.sender === 'core' && (
               <div className="w-9 h-9 bg-[#1A1A1A] text-[#FDFCFB] font-serif font-black flex items-center justify-center shrink-0 mt-1">
                 C
               </div>
@@ -729,7 +729,7 @@ export const AskNexusView: React.FC<AskNexusViewProps> = ({
               }`}
             >
               {/* Header inside bot message */}
-              {msg.sender === 'nexus' && (
+              {msg.sender === 'core' && (
                 <div className="flex items-center justify-between pb-2 border-b border-[#1A1A1A]/30 text-[10px] font-sans font-bold uppercase tracking-widest text-[#1A1A1A]/70">
                   <div className="flex items-center gap-2">
                     <span className="text-[#1A1A1A]">CORE Intelligence</span>

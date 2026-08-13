@@ -78,7 +78,7 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
     status: 'Indexed',
     summary: 'Rules governing enterprise AI data handling, tenant isolation, SOC2 encryption standards, and employee access levels.',
     tags: ['Security', 'Privacy', 'Compliance', 'SOC2'],
-    contentExcerpt: 'All internal corporate data processed by NEXUS remains strictly within tenant-bounded private Cloud Run containers with AES-256 at-rest encryption and zero model training retention.'
+    contentExcerpt: 'All internal corporate data processed by CORE remains strictly within tenant-bounded private Cloud Run containers with AES-256 at-rest encryption and zero model training retention.'
   },
   {
     id: 'doc-006',
@@ -92,7 +92,7 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
     status: 'Indexed',
     summary: 'Internal handbook detailing company policies, benefit packages, escalation hierarchies, and knowledge retention guidelines.',
     tags: ['HR', 'Onboarding', 'SOP', 'Benefits'],
-    contentExcerpt: 'Section 8: Exit knowledge transfer mandates that all department heads document key process dependencies in the central NEXUS repository at least 14 days prior to handover.'
+    contentExcerpt: 'Section 8: Exit knowledge transfer mandates that all department heads document key process dependencies in the central CORE repository at least 14 days prior to handover.'
   }
 ];
 
