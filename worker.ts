@@ -7,6 +7,7 @@ export interface Env {
   DATABASE_URL?: string;
   DEPLOYMENT_MODE?: string;
   MY_R2_BUCKET?: any;
+  ASSETS?: any;
 }
 
 export default {
@@ -80,6 +81,17 @@ Be professional, precise, executive-level, and factual.`;
       return new Response(JSON.stringify({ status: 'ok', runtime: 'cloudflare-worker' }), {
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // Serve Static Assets (React UI dist folder) for all frontend routes
+    if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.status !== 404) {
+        return assetResponse;
+      }
+      // SPA Fallback: Return index.html for client-side routing
+      const indexRequest = new Request(new URL('/index.html', request.url), request);
+      return await env.ASSETS.fetch(indexRequest);
     }
 
     return new Response('CORE AI Engine API is running on Cloudflare Workers edge.', { status: 200 });
