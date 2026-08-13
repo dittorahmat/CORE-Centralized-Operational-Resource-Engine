@@ -1,6 +1,7 @@
-name = "core-centralized-operational-resource-engine"
+name = "core"
 main = "server.ts"
 compatibility_date = "2026-08-01"
+compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
 DEPLOYMENT_MODE = "cloudflare"
